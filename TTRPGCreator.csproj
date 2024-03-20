@@ -45,6 +45,9 @@
     <Reference Include="DSharpPlus.Interactivity, Version=4.4.6.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\DSharpPlus.Interactivity.4.4.6\lib\netstandard2.0\DSharpPlus.Interactivity.dll</HintPath>
     </Reference>
+    <Reference Include="DSharpPlus.SlashCommands, Version=4.4.6.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\DSharpPlus.SlashCommands.4.4.6\lib\netstandard2.0\DSharpPlus.SlashCommands.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=5.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>packages\Microsoft.Bcl.AsyncInterfaces.5.0.0\lib\net461\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
     </Reference>
@@ -58,7 +61,7 @@
       <HintPath>packages\Microsoft.Extensions.Logging.Abstractions.5.0.0\lib\net461\Microsoft.Extensions.Logging.Abstractions.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>packages\Newtonsoft.Json.13.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <HintPath>packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
@@ -142,11 +145,20 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Events\ButtonEvents.cs" />
+    <Compile Include="Functionality\Calculator.cs" />
+    <Compile Include="Commands\Slash\TestSlashCommands.cs" />
+    <Compile Include="Commands\TestCommands.cs" />
+    <Compile Include="Config\JSONReader.cs" />
+    <Compile Include="Events\TestEvents.cs" />
+    <Compile Include="Functionality\DiceRoller.cs" />
+    <Compile Include="Other\CardSystem.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="Config\config.json" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
