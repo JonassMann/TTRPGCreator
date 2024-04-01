@@ -19,6 +19,16 @@ namespace TTRPGCreator.Events
         {
             _client = client;
             client.ComponentInteractionCreated += Client_ComponentInteractionCreated;
+            client.ModalSubmitted += Client_ModalSubmitted;
+        }
+
+        private static async Task Client_ModalSubmitted(DiscordClient sender, ModalSubmitEventArgs e)
+        {
+            if(e.Interaction.Type == InteractionType.ModalSubmit)
+            {
+                var values = e.Values;
+                await e.Interaction.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, new DiscordInteractionResponseBuilder().WithContent($"{e.Interaction.User.Username} submitted a modal with input: {values.Values.First()}"));
+            }
         }
 
         private static async Task Client_ComponentInteractionCreated(DiscordClient sender, ComponentInteractionCreateEventArgs e)
@@ -126,5 +136,7 @@ namespace TTRPGCreator.Events
                     break;
             }
         }
+
+
     }
 }

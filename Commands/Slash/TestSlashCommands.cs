@@ -76,6 +76,17 @@ namespace TTRPGCreator.Commands.Slash
 
             await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent(rollMessage));
         }
+
+        [SlashCommand("modal", "Show a modal")]
+        public async Task Modal(InteractionContext ctx)
+        {
+            var modal = new DiscordInteractionResponseBuilder()
+                .WithTitle("Test Modal")
+                .WithCustomId("modal")
+                .AddComponents(new TextInputComponent("Random", "randomTextBox", "Type something here"));
+
+            await ctx.CreateResponseAsync(InteractionResponseType.Modal, modal);
+        }
     }
 }
 public enum TestEnum
