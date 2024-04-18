@@ -17,19 +17,17 @@ namespace TTRPGCreator.Functionality
             int diceMod = diceParts.Length > 2 ? int.Parse(diceParts[2]) : 0;
 
             int total = 0;
-            int tempTotal = 0;
             Random random = new Random();
 
             for (int i = -1; i < Math.Abs(adv); i++)
             {
+                int tempTotal = 0;
                 for (int j = 0; j < diceCount; j++)
                 {
                     tempTotal += random.Next(1, diceSize + 1);
                 }
 
-                if (total == 0)
-                    total = tempTotal;
-                else if ((tempTotal > total && adv > 0) || (tempTotal < total && adv < 0))
+                if (total == 0 || (tempTotal > total && adv > 0) || (tempTotal < total && adv < 0))
                     total = tempTotal;
             }
 

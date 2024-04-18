@@ -14,10 +14,10 @@ namespace TTRPGCreator.Events
 {
     internal class TestEvents
     {
-        public static void RegisterEvents(DiscordClient client, CommandsNextExtension commands)
+        public static void RegisterEvents()
         {
-            client.VoiceStateUpdated += Client_VoiceStateUpdated;
-            commands.CommandErrored += Commands_CommandErrored;
+            Program.client.VoiceStateUpdated += Client_VoiceStateUpdated;
+            Program.commands.CommandErrored += Commands_CommandErrored;
         }
 
         private static async Task Client_VoiceStateUpdated(DiscordClient sender, VoiceStateUpdateEventArgs e)

@@ -13,13 +13,10 @@ namespace TTRPGCreator.Events
 {
     public class ButtonEvents
     {
-        private static DiscordClient _client;
-
-        public static void RegisterEvents(DiscordClient client)
+        public static void RegisterEvents()
         {
-            _client = client;
-            client.ComponentInteractionCreated += Client_ComponentInteractionCreated;
-            client.ModalSubmitted += Client_ModalSubmitted;
+            Program.client.ComponentInteractionCreated += Client_ComponentInteractionCreated;
+            Program.client.ModalSubmitted += Client_ModalSubmitted;
         }
 
         private static async Task Client_ModalSubmitted(DiscordClient sender, ModalSubmitEventArgs e)
@@ -126,7 +123,7 @@ namespace TTRPGCreator.Events
 
                     foreach (var user in mentionOptions)
                     {
-                        var selectedUser = await _client.GetUserAsync(ulong.Parse(user));
+                        var selectedUser = await Program.client.GetUserAsync(ulong.Parse(user));
                         await e.Interaction.CreateResponseAsync(InteractionResponseType.UpdateMessage, new DiscordInteractionResponseBuilder().WithContent(selectedUser.Mention));
                     }
 
