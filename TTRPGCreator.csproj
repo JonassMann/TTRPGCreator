@@ -164,6 +164,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Commands\Commands_System.cs" />
+    <Compile Include="Commands\SlashCommands_Character.cs" />
+    <Compile Include="Commands\SlashCommands_Item.cs" />
+    <Compile Include="Commands\SlashCommands_Status.cs" />
     <Compile Include="Commands\SlashCommands_System.cs" />
     <Compile Include="Database\DBEngine.cs" />
     <Compile Include="Database\DUser.cs" />

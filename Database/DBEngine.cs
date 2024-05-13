@@ -1,9 +1,7 @@
-﻿using DSharpPlus.CommandsNext;
-using Npgsql;
+﻿using Npgsql;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using TTRPGCreator.System;
 
@@ -248,7 +246,7 @@ namespace TTRPGCreator.Database
                                        $");" +
                                    $"CREATE TABLE IF NOT EXISTS {gameId}.tags (" +
                                        $"tag_id SERIAL PRIMARY KEY," +
-                                       $"name VARCHAR" +
+                                       $"tag VARCHAR UNIQUE" +
                                        $");" +
 
                                    $"CREATE TABLE IF NOT EXISTS {gameId}.effect_tags (" +
@@ -294,6 +292,14 @@ namespace TTRPGCreator.Database
                                        $"PRIMARY KEY (parent_status_id, child_status_id)," +
                                        $"FOREIGN KEY (parent_status_id) REFERENCES {gameId}.statuses(status_id)," +
                                        $"FOREIGN KEY (child_status_id) REFERENCES {gameId}.statuses(status_id)" +
+                                       $");" +
+
+                                   $"CREATE TABLE IF NOT EXISTS {gameId}.status_effects (" +
+                                       $"status_id INT," +
+                                       $"effect_id INT," +
+                                       $"PRIMARY KEY (status_id, effect_id)," +
+                                       $"FOREIGN KEY (status_id) REFERENCES {gameId}.statuses(status_id)," +
+                                       $"FOREIGN KEY (effect_id) REFERENCES {gameId}.effects(effect_id)" +
                                        $");";
 
                     using (var cmd = new NpgsqlCommand(tablesQuery, conn))
@@ -356,6 +362,40 @@ namespace TTRPGCreator.Database
             return characters;
         }
 
+        public async Task<ulong?> GetCharacterDiscord(ulong serverID, ulong userID)
+        {
+            ulong? characterID = null;
+
+            try
+            {
+                using (var conn = new NpgsqlConnection(connectionString))
+                {
+                    string gameId = DataCache.gameList[serverID];
+
+                    await conn.OpenAsync();
+                    string query = $"SELECT character_id " +
+                                   $"FROM {gameId}.characters " +
+                                   $"WHERE discord_id = {userID}";
+
+                    using (var cmd = new NpgsqlCommand(query, conn))
+                    using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            characterID = (ulong?)reader.GetInt64(0);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return null;
+            }
+
+            return characterID;
+        }
+
         public async Task<bool> AddCharacter(ulong serverID, Character character)
         {
             try
@@ -376,7 +416,7 @@ namespace TTRPGCreator.Database
                     else
                     {
                         query = $"INSERT INTO {gameId}.characters (name, description, discord_id) " +
-                                $"VALUES (@name, @description, @discordId)";
+                                $"VALUES (@name, @description, @discord_id)";
                     }
 
                     using (var cmd = new NpgsqlCommand(query, conn))
@@ -387,7 +427,96 @@ namespace TTRPGCreator.Database
                         }
                         cmd.Parameters.AddWithValue("name", character.name);
                         cmd.Parameters.AddWithValue("description", character.description);
-                        cmd.Parameters.AddWithValue("discordId", character.discord_id ?? (object)DBNull.Value);
+                        cmd.Parameters.AddWithValue("discord_id", character.discord_id ?? (object)DBNull.Value);
+
+                        await cmd.ExecuteNonQueryAsync();
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return false;
+            }
+        }
+
+        public async Task<bool> AddCharacterItem(ulong serverID, long characterId, long itemId, int quantity, bool? equipped)
+        {
+            try
+            {
+                Console.WriteLine(equipped?.ToString() ?? "null");
+
+                using (var conn = new NpgsqlConnection(connectionString))
+                {
+                    string gameId = DataCache.gameList[serverID];
+                    await conn.OpenAsync();
+
+                    // First, try to update the existing row
+                    string query = $"UPDATE {gameId}.character_items SET " +
+                                   $"quantity = quantity + @quantity, " +
+                                   $"equipped = COALESCE(@equipped, equipped) " +
+                                   $"WHERE character_id = @character_id AND item_id = @item_id " +
+                                   $"RETURNING quantity;";
+
+                    using (var cmd = new NpgsqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@character_id", characterId);
+                        cmd.Parameters.AddWithValue("@item_id", itemId);
+                        cmd.Parameters.AddWithValue("@quantity", quantity);
+                        cmd.Parameters.AddWithValue("@equipped", (object)equipped ?? DBNull.Value);
+
+                        var totalQuantity = await cmd.ExecuteScalarAsync();
+
+                        // If the row doesn't exist, totalQuantity will be null
+                        if (totalQuantity == null)
+                        {
+                            // Insert a new row
+                            query = $"INSERT INTO {gameId}.character_items (character_id, item_id, quantity, equipped) " +
+                                    $"VALUES (@character_id, @item_id, @quantity, COALESCE(@equipped, false));";
+
+                            cmd.CommandText = query;
+                            await cmd.ExecuteNonQueryAsync();
+                        }
+                        else if ((int)totalQuantity <= 0)
+                        {
+                            // If the total quantity is less than or equal to 0, delete the row
+                            query = $"DELETE FROM {gameId}.character_items WHERE character_id = @character_id AND item_id = @item_id";
+                            cmd.CommandText = query;
+                            await cmd.ExecuteNonQueryAsync();
+                        }
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return false;
+            }
+        }
+
+        public async Task<bool> AddCharacterStatus(ulong serverID, long characterId, long statusId, int level)
+        {
+            try
+            {
+                using (var conn = new NpgsqlConnection(connectionString))
+                {
+                    string gameId = DataCache.gameList[serverID];
+                    await conn.OpenAsync();
+
+                    string query = $"INSERT INTO {gameId}.character_statuses (character_id, status_id, level) " +
+                                   $"VALUES (@character_id, @status_id, @level) " +
+                                   $"ON CONFLICT (character_id, status_id) DO UPDATE SET " +
+                                   $"level = EXCLUDED.level;";
+
+                    using (var cmd = new NpgsqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@character_id", characterId);
+                        cmd.Parameters.AddWithValue("@status_id", statusId);
+                        cmd.Parameters.AddWithValue("@level", level);
 
                         await cmd.ExecuteNonQueryAsync();
                     }
@@ -491,9 +620,42 @@ namespace TTRPGCreator.Database
             }
         }
 
+        public async Task<bool> AddItemStatus(ulong serverID, long itemId, long statusId, int level)
+        {
+            try
+            {
+                using (var conn = new NpgsqlConnection(connectionString))
+                {
+                    string gameId = DataCache.gameList[serverID];
+                    await conn.OpenAsync();
+
+                    string query = $"INSERT INTO {gameId}.item_statuses (item_id, status_id, level) " +
+                                   $"VALUES (@item_id, @status_id, @level) " +
+                                   $"ON CONFLICT (item_id, status_id) DO UPDATE SET " +
+                                   $"level = EXCLUDED.level;";
+
+                    using (var cmd = new NpgsqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@item_id", itemId);
+                        cmd.Parameters.AddWithValue("@status_id", statusId);
+                        cmd.Parameters.AddWithValue("@level", level);
+
+                        await cmd.ExecuteNonQueryAsync();
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return false;
+            }
+        }
+
         #endregion
 
-        #region Item Functions
+        #region Status Functions
 
         public async Task<List<Status>> GetStatuses(ulong serverID)
         {
@@ -582,9 +744,39 @@ namespace TTRPGCreator.Database
             }
         }
 
+        public async Task<bool> AddStatusEffect(ulong serverID, long statusId, long effectId)
+        {
+            try
+            {
+                using (var conn = new NpgsqlConnection(connectionString))
+                {
+                    string gameId = DataCache.gameList[serverID];
+                    await conn.OpenAsync();
+
+                    string query = $"INSERT INTO {gameId}.status_effects (status_id, effect_id) " +
+                                   $"VALUES (@status_id, @effect_id);";
+
+                    using (var cmd = new NpgsqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@status_id", statusId);
+                        cmd.Parameters.AddWithValue("@effect_id", effectId);
+
+                        await cmd.ExecuteNonQueryAsync();
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return false;
+            }
+        }
+
         #endregion
 
-        #region Item Functions
+        #region Effect Functions
 
         public async Task<List<Effect>> GetEffects(ulong serverID)
         {
@@ -668,6 +860,125 @@ namespace TTRPGCreator.Database
                 return false;
             }
         }
+
+        public async Task<bool> AddEffectTags(ulong serverID, long effectId, List<string> tags)
+        {
+            try
+            {
+                using (var conn = new NpgsqlConnection(connectionString))
+                {
+                    string gameId = DataCache.gameList[serverID];
+                    await conn.OpenAsync();
+
+                    foreach (var tag in tags)
+                    {
+                        string query = $"INSERT INTO {gameId}.tags (tag) " +
+                                       $"VALUES (@tag) " +
+                                       $"ON CONFLICT (tag) DO NOTHING " +
+                                       $"RETURNING tag_id;";
+
+                        int tagId;
+                        using (var cmd = new NpgsqlCommand(query, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@tag", tag);
+
+                            object result = await cmd.ExecuteScalarAsync();
+                            if (result != null)
+                            {
+                                tagId = (int)result;
+                            }
+                            else
+                            {
+                                query = $"SELECT tag_id FROM {gameId}.tags WHERE tag = @tag;";
+                                cmd.CommandText = query;
+                                tagId = (int)await cmd.ExecuteScalarAsync();
+                            }
+                        }
+
+                        query = $"INSERT INTO {gameId}.effect_tags (effect_id, tag_id) " +
+                                $"VALUES (@effect_id, @tag_id) " +
+                                $"ON CONFLICT (effect_id, tag_id) DO NOTHING;";
+
+                        using (var cmd = new NpgsqlCommand(query, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@effect_id", effectId);
+                            cmd.Parameters.AddWithValue("@tag_id", tagId);
+
+                            await cmd.ExecuteNonQueryAsync();
+                        }
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return false;
+            }
+        }
+
+        public async Task<List<string>> GetAllEffects(ulong serverID, long characterId, List<string> requiredTags)
+        {
+            List<string> effects = new List<string>();
+
+            try
+            {
+                using (var conn = new NpgsqlConnection(connectionString))
+                {
+                    string gameId = DataCache.gameList[serverID];
+                    await conn.OpenAsync();
+
+                    string query = $@"
+                        WITH RECURSIVE StatusHierarchy AS (
+                            SELECT character_statuses.status_id
+                            FROM {gameId}.character_statuses
+                            WHERE character_statuses.character_id = @characterId
+                            UNION
+                            SELECT item_statuses.status_id
+                            FROM {gameId}.character_items
+                            JOIN {gameId}.item_statuses ON character_items.item_id = item_statuses.item_id
+                            WHERE character_items.character_id = @characterId AND character_items.equipped = true
+                            UNION
+                            SELECT status_statuses.child_status_id
+                            FROM StatusHierarchy
+                            JOIN {gameId}.status_statuses ON StatusHierarchy.status_id = status_statuses.parent_status_id
+                        )
+                        SELECT effects.effect
+                        FROM StatusHierarchy
+                        JOIN {gameId}.status_effects ON StatusHierarchy.status_id = status_effects.status_id
+                        JOIN {gameId}.effects ON status_effects.effect_id = effects.effect_id
+                        JOIN {gameId}.effect_tags ON effects.effect_id = effect_tags.effect_id
+                        JOIN {gameId}.tags ON effect_tags.tag_id = tags.tag_id
+                        WHERE tags.tag = ANY(@tags)
+                        GROUP BY effects.effect_id
+                        HAVING COUNT(DISTINCT tags.tag) = @tagCount;";
+
+                    using (var cmd = new NpgsqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@characterId", characterId);
+                        cmd.Parameters.AddWithValue("@tags", NpgsqlTypes.NpgsqlDbType.Array | NpgsqlTypes.NpgsqlDbType.Text, requiredTags.ToArray());
+                        cmd.Parameters.AddWithValue("@tagCount", requiredTags.Count);
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                effects.Add(reader.GetString(0));
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return null;
+            }
+
+            return effects;
+        }
+
 
         #endregion
     }

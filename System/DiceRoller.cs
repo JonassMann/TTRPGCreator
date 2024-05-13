@@ -9,29 +9,65 @@ namespace TTRPGCreator.Functionality
 {
     public class DiceRoller
     {
-        public static int Roll(string diceString, int adv = 0)
+        public static int? Roll(string diceString)
         {
-            string[] diceParts = Regex.Split(diceString, @"d|\+");
-            int diceCount = int.Parse(diceParts[0]);
-            int diceSize = int.Parse(diceParts[1]);
-            int diceMod = diceParts.Length > 2 ? int.Parse(diceParts[2]) : 0;
-
-            int total = 0;
-            Random random = new Random();
-
-            for (int i = -1; i < Math.Abs(adv); i++)
+            try
             {
-                int tempTotal = 0;
-                for (int j = 0; j < diceCount; j++)
+                Console.WriteLine($"Rolling: {diceString}");
+
+                string[] diceParts = diceString.Split(new char[] { 'd', '+', '!' }, StringSplitOptions.RemoveEmptyEntries);
+                int diceCount = int.Parse(diceParts[0]);
+                int diceSize = int.Parse(diceParts[1]);
+                int diceMod = 0;
+                int diceAdv = 0;
+
+                if (diceParts.Length == 4)
                 {
-                    tempTotal += random.Next(1, diceSize + 1);
+                    diceMod = int.Parse(diceParts[2]);
+                    diceAdv = int.Parse(diceParts[3]);
+                }
+                else if (diceString.Contains('+'))
+                {
+                    diceMod = int.Parse(diceParts[2]);
+                }
+                else if (diceString.Contains('!'))
+                {
+                    diceAdv = int.Parse(diceParts[2]);
                 }
 
-                if (total == 0 || (tempTotal > total && adv > 0) || (tempTotal < total && adv < 0))
-                    total = tempTotal;
-            }
+                int total = 0;
+                string rollString = "";
 
-            return total + diceMod;
+                Random random = new Random();
+
+                for (int i = -1; i < Math.Abs(diceAdv); i++)
+                {
+                    int tempTotal = 0;
+                    string tempRollString = "";
+                    for (int j = 0; j < diceCount; j++)
+                    {
+                        int roll = random.Next(1, diceSize + 1);
+                        tempRollString += $"{roll} + ";
+                        tempTotal += roll;
+                    }
+
+                    if (total == 0 || (tempTotal > total && diceAdv > 0) || (tempTotal < total && diceAdv < 0))
+                    {
+                        total = tempTotal;
+                        rollString = tempRollString;
+                    }
+                }
+
+                rollString += $"({diceMod})";
+                Console.WriteLine($"Rolled: {rollString} = {total + diceMod}");
+
+                return total + diceMod;
+            }
+            catch (Exception)
+            {
+                Console.WriteLine($"Bad roll syntax");
+                return null;
+            }
         }
     }
 }

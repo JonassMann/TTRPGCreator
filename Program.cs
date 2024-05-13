@@ -56,8 +56,10 @@ namespace TTRPGCreator
             commands.RegisterCommands<Commands_System>();
             // commands.RegisterCommands<TestCommands>();
             // slashCommandsConfig.RegisterCommands<TestSlashCommands>();
-            slashCommands.RegisterCommands<TestSlashCommands>(1067104957356052501);
             slashCommands.RegisterCommands<SlashCommands_System>(1067104957356052501);
+            slashCommands.RegisterCommands<SlashCommands_Character>(1067104957356052501);
+            slashCommands.RegisterCommands<SlashCommands_Item>(1067104957356052501);
+            slashCommands.RegisterCommands<SlashCommands_Status>(1067104957356052501);
 
             // Register events
             TestEvents.RegisterEvents();

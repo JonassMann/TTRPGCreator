@@ -8,8 +8,10 @@ namespace TTRPGCreator.System
 {
     internal class DataCache
     {
+        // <serverID, game name>
         public static Dictionary<ulong, string> gameList = new Dictionary<ulong, string>();
 
+        // <game name, Ruleset>
         public static Dictionary<string, Ruleset> gameRules = new Dictionary<string, Ruleset>();
     }
 
@@ -48,5 +50,12 @@ namespace TTRPGCreator.System
     {
         public long? id;
         public string effect;
+    }
+
+    public enum NullBool
+    {
+        None,
+        True,
+        False
     }
 }

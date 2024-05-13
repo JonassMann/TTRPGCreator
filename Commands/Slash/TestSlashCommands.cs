@@ -64,15 +64,14 @@ namespace TTRPGCreator.Commands.Slash
         //}
 
         [SlashCommand("roll", "Roll some dice")]
-        public async Task Attachements(InteractionContext ctx, [Option("roll", "The dice to roll, [1d20]")] string diceText, [Option("advantage", "Roll with advantage?")] double adv = 0)
+        public async Task Attachements(InteractionContext ctx, [Option("roll", "The dice to roll, [1d20]")] string diceText)
         {
             await ctx.DeferAsync();
 
-            int diceRoll = DiceRoller.Roll(diceText, (int)adv);
-            string rollMessage = $"Rolling {diceText}";
-            if (adv != 0)
-                rollMessage += $" {adv + 1} times, choosing {(adv > 0 ? "highest" : "lowest")}";
-            rollMessage += $"\nRolled {diceRoll}!";
+            int? diceRoll = DiceRoller.Roll(diceText);
+            string rollMessage = diceRoll == null ?
+                                 "Wrong roll syntax" :
+                                 $"Rolling {diceText}\nRolled {diceRoll}!";
 
             await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent(rollMessage));
         }

@@ -28,5 +28,30 @@ namespace TTRPGCreator.Commands
             else
                 await ctx.Channel.SendMessageAsync("Something went wrong");
         }
+
+
+        [Command("deleteallcommands")]
+        public async Task DeleteAllCommands(CommandContext ctx)
+        {
+            // Fetch all global commands
+            var globalCommands = await ctx.Client.GetGlobalApplicationCommandsAsync();
+
+            // Delete all global commands
+            foreach (var command in globalCommands)
+            {
+                await ctx.Client.DeleteGlobalApplicationCommandAsync(command.Id);
+            }
+
+            // Fetch all guild commands
+            var guildCommands = await ctx.Client.GetGuildApplicationCommandsAsync(ctx.Guild.Id);
+
+            // Delete all guild commands
+            foreach (var command in guildCommands)
+            {
+                await ctx.Client.DeleteGuildApplicationCommandAsync(ctx.Guild.Id, command.Id);
+            }
+
+            await ctx.Channel.SendMessageAsync("All commands deleted.");
+        }
     }
 }
