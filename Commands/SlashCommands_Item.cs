@@ -74,15 +74,64 @@ namespace TTRPGCreator.Commands
             }
 
             [SlashCommand("Status", "Edits status information for an item")]
-            public async Task Status(InteractionContext ctx, [Option("item", "Item id")] long item, [Option("status", "Status id")] long status, [Option("level", "The level of the status")] double level = 1)
+            public async Task Status(InteractionContext ctx, [Option("item", "Item id")] long item, [Option("status", "Status id")] long status, [Option("level", "The level of the status")] double level = 1, [Option("delete", "Use true to delete status from item")] bool delete = false)
             {
                 await ctx.DeferAsync();
 
                 var DBEngine = new DBEngine();
-                bool querySuccess = await DBEngine.AddItemStatus(ctx.Guild.Id, item, status, (int)level);
+                int querySuccess = await DBEngine.AddItemStatus(ctx.Guild.Id, item, status, (int)level, delete);
+
+                if (querySuccess == 1)
+                    await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Status added to item"));
+                else if (querySuccess == 2)
+                    await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Status removed from item"));
+                else
+                    await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Something went wrong"));
+            }
+
+            [SlashCommand("Get", "Get information of an item")]
+            public async Task Get(InteractionContext ctx, [Option("item", "Item id")] long itemId)
+            {
+                // Defer the reply. This is especially useful for longer running commands
+                await ctx.DeferAsync();
+
+                var DBEngine = new DBEngine();
+
+                var itemInfo = await DBEngine.GetItem(ctx.Guild.Id, itemId, true);
+                if (!itemInfo.Item1)
+                {
+                    await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Something went wrong"));
+                    return;
+                }
+
+                Item item = itemInfo.Item2;
+
+                // Create a new embed builder
+                var embed = new DiscordEmbedBuilder
+                {
+                    Title = item.name,
+                    Description = item.description,
+                    Color = DiscordColor.Blurple // You can set the embed color here
+                };
+
+                if (item.statuses != null)
+                    foreach (Status status in item.statuses)
+                        embed.AddField("Status: " + status.name, $"ID: {status.id}\nDescription: {status.description}\nType: {status.type}");
+
+                // Edit the original deferred message with the new embed
+                await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embed.Build()));
+            }
+
+            [SlashCommand("Delete", "Deletes an item")]
+            public async Task Delete(InteractionContext ctx, [Option("item", "Item id")] long item)
+            {
+                await ctx.DeferAsync();
+
+                var DBEngine = new DBEngine();
+                bool querySuccess = await DBEngine.DeleteItem(ctx.Guild.Id, item);
 
                 if (querySuccess)
-                    await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Status added to item"));
+                    await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Item deleted"));
                 else
                     await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Something went wrong"));
             }

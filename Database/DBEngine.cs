@@ -224,83 +224,162 @@ namespace TTRPGCreator.Database
                     // Many tables
 
                     string tablesQuery = $"CREATE TABLE IF NOT EXISTS {gameId}.characters (" +
-                                       $"character_id SERIAL PRIMARY KEY," +
-                                       $"name VARCHAR," +
-                                       $"description TEXT," +
-                                       $"discord_id BIGINT" +
-                                       $");" +
-                                   $"CREATE TABLE IF NOT EXISTS {gameId}.items (" +
-                                       $"item_id SERIAL PRIMARY KEY," +
-                                       $"name VARCHAR," +
-                                       $"description TEXT" +
-                                       $");" +
-                                   $"CREATE TABLE IF NOT EXISTS {gameId}.statuses (" +
-                                       $"status_id SERIAL PRIMARY KEY," +
-                                       $"name VARCHAR," +
-                                       $"description TEXT," +
-                                       $"type VARCHAR" +
-                                       $");" +
-                                   $"CREATE TABLE IF NOT EXISTS {gameId}.effects (" +
-                                       $"effect_id SERIAL PRIMARY KEY," +
-                                       $"effect VARCHAR" +
-                                       $");" +
-                                   $"CREATE TABLE IF NOT EXISTS {gameId}.tags (" +
-                                       $"tag_id SERIAL PRIMARY KEY," +
-                                       $"tag VARCHAR UNIQUE" +
-                                       $");" +
+                                                           $"character_id SERIAL PRIMARY KEY," +
+                                                           $"name VARCHAR," +
+                                                           $"description TEXT," +
+                                                           $"discord_id BIGINT" +
+                                                           $");" +
+                                                       $"CREATE TABLE IF NOT EXISTS {gameId}.items (" +
+                                                           $"item_id SERIAL PRIMARY KEY," +
+                                                           $"name VARCHAR," +
+                                                           $"description TEXT" +
+                                                           $");" +
+                                                       $"CREATE TABLE IF NOT EXISTS {gameId}.statuses (" +
+                                                           $"status_id SERIAL PRIMARY KEY," +
+                                                           $"name VARCHAR," +
+                                                           $"description TEXT," +
+                                                           $"type VARCHAR" +
+                                                           $");" +
+                                                       $"CREATE TABLE IF NOT EXISTS {gameId}.effects (" +
+                                                           $"effect_id SERIAL PRIMARY KEY," +
+                                                           $"effect VARCHAR" +
+                                                           $");" +
+                                                       $"CREATE TABLE IF NOT EXISTS {gameId}.tags (" +
+                                                           $"tag_id SERIAL PRIMARY KEY," +
+                                                           $"tag VARCHAR UNIQUE" +
+                                                           $");" +
 
-                                   $"CREATE TABLE IF NOT EXISTS {gameId}.effect_tags (" +
-                                       $"effect_id INT," +
-                                       $"tag_id INT," +
-                                       $"PRIMARY KEY (effect_id, tag_id)," +
-                                       $"FOREIGN KEY (effect_id) REFERENCES {gameId}.effects(effect_id)," +
-                                       $"FOREIGN KEY (tag_id) REFERENCES {gameId}.tags(tag_id)" +
-                                       $");" +
+                                                       $"CREATE TABLE IF NOT EXISTS {gameId}.effect_tags (" +
+                                                           $"effect_id INT," +
+                                                           $"tag_id INT," +
+                                                           $"PRIMARY KEY (effect_id, tag_id)," +
+                                                           $"FOREIGN KEY (effect_id) REFERENCES {gameId}.effects(effect_id) ON DELETE CASCADE," +
+                                                           $"FOREIGN KEY (tag_id) REFERENCES {gameId}.tags(tag_id) ON DELETE CASCADE" +
+                                                           $");" +
 
-                                   $"CREATE TABLE IF NOT EXISTS {gameId}.character_items (" +
-                                       $"character_id INT," +
-                                       $"item_id INT," +
-                                       $"quantity INT," +
-                                       $"equipped BOOLEAN," +
-                                       $"PRIMARY KEY (character_id, item_id)," +
-                                       $"FOREIGN KEY (character_id) REFERENCES {gameId}.characters(character_id)," +
-                                       $"FOREIGN KEY (item_id) REFERENCES {gameId}.items(item_id)" +
-                                       $");" +
+                                                       $"CREATE TABLE IF NOT EXISTS {gameId}.character_items (" +
+                                                           $"character_id INT," +
+                                                           $"item_id INT," +
+                                                           $"quantity INT," +
+                                                           $"equipped BOOLEAN," +
+                                                           $"PRIMARY KEY (character_id, item_id)," +
+                                                           $"FOREIGN KEY (character_id) REFERENCES {gameId}.characters(character_id) ON DELETE CASCADE," +
+                                                           $"FOREIGN KEY (item_id) REFERENCES {gameId}.items(item_id) ON DELETE CASCADE" +
+                                                           $");" +
 
-                                   $"CREATE TABLE IF NOT EXISTS {gameId}.character_statuses (" +
-                                       $"character_id INT," +
-                                       $"status_id INT," +
-                                       $"level INT," +
-                                       $"PRIMARY KEY (character_id, status_id)," +
-                                       $"FOREIGN KEY (character_id) REFERENCES {gameId}.characters(character_id)," +
-                                       $"FOREIGN KEY (status_id) REFERENCES {gameId}.statuses(status_id)" +
-                                       $");" +
+                                                       $"CREATE TABLE IF NOT EXISTS {gameId}.character_statuses (" +
+                                                           $"character_id INT," +
+                                                           $"status_id INT," +
+                                                           $"level INT," +
+                                                           $"PRIMARY KEY (character_id, status_id)," +
+                                                           $"FOREIGN KEY (character_id) REFERENCES {gameId}.characters(character_id) ON DELETE CASCADE," +
+                                                           $"FOREIGN KEY (status_id) REFERENCES {gameId}.statuses(status_id) ON DELETE CASCADE" +
+                                                           $");" +
 
-                                   $"CREATE TABLE IF NOT EXISTS {gameId}.item_statuses (" +
-                                       $"item_id INT," +
-                                       $"status_id INT," +
-                                       $"level INT," +
-                                       $"PRIMARY KEY (item_id, status_id)," +
-                                       $"FOREIGN KEY (item_id) REFERENCES {gameId}.items(item_id)," +
-                                       $"FOREIGN KEY (status_id) REFERENCES {gameId}.statuses(status_id)" +
-                                       $");" +
+                                                       $"CREATE TABLE IF NOT EXISTS {gameId}.item_statuses (" +
+                                                           $"item_id INT," +
+                                                           $"status_id INT," +
+                                                           $"level INT," +
+                                                           $"PRIMARY KEY (item_id, status_id)," +
+                                                           $"FOREIGN KEY (item_id) REFERENCES {gameId}.items(item_id) ON DELETE CASCADE," +
+                                                           $"FOREIGN KEY (status_id) REFERENCES {gameId}.statuses(status_id) ON DELETE CASCADE" +
+                                                           $");" +
 
-                                   $"CREATE TABLE IF NOT EXISTS {gameId}.status_statuses (" +
-                                       $"parent_status_id INT," +
-                                       $"child_status_id INT," +
-                                       $"level INT," +
-                                       $"PRIMARY KEY (parent_status_id, child_status_id)," +
-                                       $"FOREIGN KEY (parent_status_id) REFERENCES {gameId}.statuses(status_id)," +
-                                       $"FOREIGN KEY (child_status_id) REFERENCES {gameId}.statuses(status_id)" +
-                                       $");" +
+                                                       $"CREATE TABLE IF NOT EXISTS {gameId}.status_statuses (" +
+                                                           $"parent_status_id INT," +
+                                                           $"child_status_id INT," +
+                                                           $"level INT," +
+                                                           $"PRIMARY KEY (parent_status_id, child_status_id)," +
+                                                           $"FOREIGN KEY (parent_status_id) REFERENCES {gameId}.statuses(status_id) ON DELETE CASCADE," +
+                                                           $"FOREIGN KEY (child_status_id) REFERENCES {gameId}.statuses(status_id) ON DELETE CASCADE" +
+                                                           $");" +
 
-                                   $"CREATE TABLE IF NOT EXISTS {gameId}.status_effects (" +
-                                       $"status_id INT," +
-                                       $"effect_id INT," +
-                                       $"PRIMARY KEY (status_id, effect_id)," +
-                                       $"FOREIGN KEY (status_id) REFERENCES {gameId}.statuses(status_id)," +
-                                       $"FOREIGN KEY (effect_id) REFERENCES {gameId}.effects(effect_id)" +
-                                       $");";
+                                                       $"CREATE TABLE IF NOT EXISTS {gameId}.status_effects (" +
+                                                           $"status_id INT," +
+                                                           $"effect_id INT," +
+                                                           $"PRIMARY KEY (status_id, effect_id)," +
+                                                           $"FOREIGN KEY (status_id) REFERENCES {gameId}.statuses(status_id) ON DELETE CASCADE," +
+                                                           $"FOREIGN KEY (effect_id) REFERENCES {gameId}.effects(effect_id) ON DELETE CASCADE" +
+                                                           $");";
+
+                    //string tablesQuery = $"CREATE TABLE IF NOT EXISTS {gameId}.characters (" +
+                    //                   $"character_id SERIAL PRIMARY KEY," +
+                    //                   $"name VARCHAR," +
+                    //                   $"description TEXT," +
+                    //                   $"discord_id BIGINT" +
+                    //                   $");" +
+                    //               $"CREATE TABLE IF NOT EXISTS {gameId}.items (" +
+                    //                   $"item_id SERIAL PRIMARY KEY," +
+                    //                   $"name VARCHAR," +
+                    //                   $"description TEXT" +
+                    //                   $");" +
+                    //               $"CREATE TABLE IF NOT EXISTS {gameId}.statuses (" +
+                    //                   $"status_id SERIAL PRIMARY KEY," +
+                    //                   $"name VARCHAR," +
+                    //                   $"description TEXT," +
+                    //                   $"type VARCHAR" +
+                    //                   $");" +
+                    //               $"CREATE TABLE IF NOT EXISTS {gameId}.effects (" +
+                    //                   $"effect_id SERIAL PRIMARY KEY," +
+                    //                   $"effect VARCHAR" +
+                    //                   $");" +
+                    //               $"CREATE TABLE IF NOT EXISTS {gameId}.tags (" +
+                    //                   $"tag_id SERIAL PRIMARY KEY," +
+                    //                   $"tag VARCHAR UNIQUE" +
+                    //                   $");" +
+
+                    //               $"CREATE TABLE IF NOT EXISTS {gameId}.effect_tags (" +
+                    //                   $"effect_id INT," +
+                    //                   $"tag_id INT," +
+                    //                   $"PRIMARY KEY (effect_id, tag_id)," +
+                    //                   $"FOREIGN KEY (effect_id) REFERENCES {gameId}.effects(effect_id)," +
+                    //                   $"FOREIGN KEY (tag_id) REFERENCES {gameId}.tags(tag_id)" +
+                    //                   $");" +
+
+                    //               $"CREATE TABLE IF NOT EXISTS {gameId}.character_items (" +
+                    //                   $"character_id INT," +
+                    //                   $"item_id INT," +
+                    //                   $"quantity INT," +
+                    //                   $"equipped BOOLEAN," +
+                    //                   $"PRIMARY KEY (character_id, item_id)," +
+                    //                   $"FOREIGN KEY (character_id) REFERENCES {gameId}.characters(character_id)," +
+                    //                   $"FOREIGN KEY (item_id) REFERENCES {gameId}.items(item_id)" +
+                    //                   $");" +
+
+                    //               $"CREATE TABLE IF NOT EXISTS {gameId}.character_statuses (" +
+                    //                   $"character_id INT," +
+                    //                   $"status_id INT," +
+                    //                   $"level INT," +
+                    //                   $"PRIMARY KEY (character_id, status_id)," +
+                    //                   $"FOREIGN KEY (character_id) REFERENCES {gameId}.characters(character_id)," +
+                    //                   $"FOREIGN KEY (status_id) REFERENCES {gameId}.statuses(status_id)" +
+                    //                   $");" +
+
+                    //               $"CREATE TABLE IF NOT EXISTS {gameId}.item_statuses (" +
+                    //                   $"item_id INT," +
+                    //                   $"status_id INT," +
+                    //                   $"level INT," +
+                    //                   $"PRIMARY KEY (item_id, status_id)," +
+                    //                   $"FOREIGN KEY (item_id) REFERENCES {gameId}.items(item_id)," +
+                    //                   $"FOREIGN KEY (status_id) REFERENCES {gameId}.statuses(status_id)" +
+                    //                   $");" +
+
+                    //               $"CREATE TABLE IF NOT EXISTS {gameId}.status_statuses (" +
+                    //                   $"parent_status_id INT," +
+                    //                   $"child_status_id INT," +
+                    //                   $"level INT," +
+                    //                   $"PRIMARY KEY (parent_status_id, child_status_id)," +
+                    //                   $"FOREIGN KEY (parent_status_id) REFERENCES {gameId}.statuses(status_id)," +
+                    //                   $"FOREIGN KEY (child_status_id) REFERENCES {gameId}.statuses(status_id)" +
+                    //                   $");" +
+
+                    //               $"CREATE TABLE IF NOT EXISTS {gameId}.status_effects (" +
+                    //                   $"status_id INT," +
+                    //                   $"effect_id INT," +
+                    //                   $"PRIMARY KEY (status_id, effect_id)," +
+                    //                   $"FOREIGN KEY (status_id) REFERENCES {gameId}.statuses(status_id)," +
+                    //                   $"FOREIGN KEY (effect_id) REFERENCES {gameId}.effects(effect_id)" +
+                    //                   $");";
 
                     using (var cmd = new NpgsqlCommand(tablesQuery, conn))
                     {
@@ -442,7 +521,7 @@ namespace TTRPGCreator.Database
             }
         }
 
-        public async Task<bool> AddCharacterItem(ulong serverID, long characterId, long itemId, int quantity, bool? equipped)
+        public async Task<int> AddCharacterItem(ulong serverID, long characterId, long itemId, int quantity, bool? equipped, bool delete)
         {
             try
             {
@@ -452,6 +531,19 @@ namespace TTRPGCreator.Database
                 {
                     string gameId = DataCache.gameList[serverID];
                     await conn.OpenAsync();
+
+                    // If delete is true, remove the row and return
+                    if (delete)
+                    {
+                        string deleteQuery = $"DELETE FROM {gameId}.character_items WHERE character_id = @character_id AND item_id = @item_id";
+                        using (var deleteCmd = new NpgsqlCommand(deleteQuery, conn))
+                        {
+                            deleteCmd.Parameters.AddWithValue("@character_id", characterId);
+                            deleteCmd.Parameters.AddWithValue("@item_id", itemId);
+                            await deleteCmd.ExecuteNonQueryAsync();
+                        }
+                        return 2; // Exit the function after deleting the row
+                    }
 
                     // First, try to update the existing row
                     string query = $"UPDATE {gameId}.character_items SET " +
@@ -489,16 +581,16 @@ namespace TTRPGCreator.Database
                     }
                 }
 
-                return true;
+                return 1;
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                return false;
+                return 0;
             }
         }
 
-        public async Task<bool> AddCharacterStatus(ulong serverID, long characterId, long statusId, int level)
+        public async Task<int> AddCharacterStatus(ulong serverID, long characterId, long statusId, int level, bool delete)
         {
             try
             {
@@ -506,6 +598,19 @@ namespace TTRPGCreator.Database
                 {
                     string gameId = DataCache.gameList[serverID];
                     await conn.OpenAsync();
+
+                    // If delete is true, remove the row and return
+                    if (delete)
+                    {
+                        string deleteQuery = $"DELETE FROM {gameId}.character_statuses WHERE character_id = @character_id AND status_id = @status_id";
+                        using (var deleteCmd = new NpgsqlCommand(deleteQuery, conn))
+                        {
+                            deleteCmd.Parameters.AddWithValue("@character_id", characterId);
+                            deleteCmd.Parameters.AddWithValue("@status_id", statusId);
+                            await deleteCmd.ExecuteNonQueryAsync();
+                        }
+                        return 2; // Exit the function after deleting the row
+                    }
 
                     string query = $"INSERT INTO {gameId}.character_statuses (character_id, status_id, level) " +
                                    $"VALUES (@character_id, @status_id, @level) " +
@@ -518,6 +623,129 @@ namespace TTRPGCreator.Database
                         cmd.Parameters.AddWithValue("@status_id", statusId);
                         cmd.Parameters.AddWithValue("@level", level);
 
+                        await cmd.ExecuteNonQueryAsync();
+                    }
+                }
+
+                return 1;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return 0;
+            }
+        }
+
+        public async Task<(bool, Character)> GetCharacter(ulong serverID, long characterId, bool full = false)
+        {
+            try
+            {
+                Character characterDetails = new Character();
+                using (var conn = new NpgsqlConnection(connectionString))
+                {
+                    string gameId = DataCache.gameList[serverID];
+                    await conn.OpenAsync();
+
+                    // Get character main information
+                    using (var cmd = new NpgsqlCommand($"SELECT name, description, discord_id " +
+                                                       $"FROM {gameId}.characters " +
+                                                       $"WHERE character_id = @characterId", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@characterId", characterId);
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            if (await reader.ReadAsync())
+                            {
+                                characterDetails.id = characterId;
+                                characterDetails.name = reader.GetString(0);
+                                characterDetails.description = reader.GetString(1);
+                                if (!reader.IsDBNull(2))
+                                    characterDetails.discord_id = reader.GetInt64(2);
+                                else
+                                    characterDetails.discord_id = null;
+                            }
+                        }
+                    }
+
+                    if (!full)
+                        return (true, characterDetails);
+
+                    // Get character items
+                    characterDetails.items = new List<Item>();
+                    using (var cmd = new NpgsqlCommand($"SELECT item_id, quantity, equipped " +
+                                                       $"FROM {gameId}.character_items " +
+                                                       $"WHERE character_id = @characterId", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@characterId", characterId);
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                long id = reader.GetInt64(0);
+                                var querySuccess = await GetItem(serverID, id);
+                                if (!querySuccess.Item1)
+                                {
+                                    Console.WriteLine("Get Item Failed");
+                                    continue;
+                                }
+                                Item item = querySuccess.Item2;
+                                item.id = reader.GetInt64(0);
+                                item.quantity = reader.GetInt32(1);
+                                item.equipped = reader.GetBoolean(2);
+
+                                characterDetails.items.Add(item);
+                            }
+                        }
+                    }
+
+                    // Get character statuses
+                    characterDetails.statuses = new List<Status>();
+                    using (var cmd = new NpgsqlCommand($"SELECT status_id, level " +
+                                                       $"FROM {gameId}.character_statuses " +
+                                                       $"WHERE character_id = @characterId", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@characterId", characterId);
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                long id = reader.GetInt64(0);
+                                var querySuccess = await GetStatus(serverID, id);
+                                if (!querySuccess.Item1)
+                                {
+                                    Console.WriteLine("Get Status Failed");
+                                    continue;
+                                }
+                                Status status = querySuccess.Item2;
+                                status.id = reader.GetInt64(0);
+
+                                characterDetails.statuses.Add(status);
+                            }
+                        }
+                    }
+                }
+
+                return (true, characterDetails);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return (false, null);
+            }
+        }
+
+        public async Task<bool> DeleteCharacter(ulong serverID, long characterId)
+        {
+            try
+            {
+                using (var conn = new NpgsqlConnection(connectionString))
+                {
+                    string gameId = DataCache.gameList[serverID];
+                    await conn.OpenAsync();
+
+                    using (var cmd = new NpgsqlCommand($"DELETE FROM {gameId}.characters WHERE character_id = @characterId", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@characterId", characterId);
                         await cmd.ExecuteNonQueryAsync();
                     }
                 }
@@ -620,7 +848,7 @@ namespace TTRPGCreator.Database
             }
         }
 
-        public async Task<bool> AddItemStatus(ulong serverID, long itemId, long statusId, int level)
+        public async Task<int> AddItemStatus(ulong serverID, long itemId, long statusId, int level, bool delete)
         {
             try
             {
@@ -628,6 +856,19 @@ namespace TTRPGCreator.Database
                 {
                     string gameId = DataCache.gameList[serverID];
                     await conn.OpenAsync();
+
+                    // If delete is true, remove the row and return
+                    if (delete)
+                    {
+                        string deleteQuery = $"DELETE FROM {gameId}.item_statuses WHERE item_id = @item_id AND status_id = @status_id";
+                        using (var deleteCmd = new NpgsqlCommand(deleteQuery, conn))
+                        {
+                            deleteCmd.Parameters.AddWithValue("@item_id", itemId);
+                            deleteCmd.Parameters.AddWithValue("@status_id", statusId);
+                            await deleteCmd.ExecuteNonQueryAsync();
+                        }
+                        return 2; // Exit the function after deleting the row
+                    }
 
                     string query = $"INSERT INTO {gameId}.item_statuses (item_id, status_id, level) " +
                                    $"VALUES (@item_id, @status_id, @level) " +
@@ -640,6 +881,97 @@ namespace TTRPGCreator.Database
                         cmd.Parameters.AddWithValue("@status_id", statusId);
                         cmd.Parameters.AddWithValue("@level", level);
 
+                        await cmd.ExecuteNonQueryAsync();
+                    }
+                }
+
+                return 1;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return 0;
+            }
+        }
+
+        public async Task<(bool, Item)> GetItem(ulong serverID, long itemId, bool full = false)
+        {
+            try
+            {
+                Item itemDetails = new Item();
+                using (var conn = new NpgsqlConnection(connectionString))
+                {
+                    string gameId = DataCache.gameList[serverID];
+                    await conn.OpenAsync();
+
+                    // Get item main information
+                    using (var cmd = new NpgsqlCommand($"SELECT name, description " +
+                                                       $"FROM {gameId}.items " +
+                                                       $"WHERE item_id = @itemId", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@itemId", itemId);
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            if (await reader.ReadAsync())
+                            {
+                                itemDetails.name = reader.GetString(0);
+                                itemDetails.description = reader.GetString(1);
+                            }
+                        }
+                    }
+
+                    if (!full)
+                        return (true, itemDetails);
+
+                    // Get item statuses
+                    itemDetails.statuses = new List<Status>();
+                    using (var cmd = new NpgsqlCommand($"SELECT status_id, level " +
+                                                       $"FROM {gameId}.item_statuses " +
+                                                       $"WHERE item_id = @itemId", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@itemId", itemId);
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                long id = reader.GetInt64(0);
+                                var querySuccess = await GetStatus(serverID, id);
+                                if (!querySuccess.Item1)
+                                {
+                                    Console.WriteLine("Get Status Failed");
+                                    continue;
+                                }
+                                Status status = querySuccess.Item2;
+                                status.id = reader.GetInt64(0);
+
+                                itemDetails.statuses.Add(status);
+                            }
+                        }
+                    }
+                }
+
+
+                return (true, itemDetails);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return (false, null);
+            }
+        }
+
+        public async Task<bool> DeleteItem(ulong serverID, long itemId)
+        {
+            try
+            {
+                using (var conn = new NpgsqlConnection(connectionString))
+                {
+                    string gameId = DataCache.gameList[serverID];
+                    await conn.OpenAsync();
+
+                    using (var cmd = new NpgsqlCommand($"DELETE FROM {gameId}.items WHERE item_id = @itemId", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@itemId", itemId);
                         await cmd.ExecuteNonQueryAsync();
                     }
                 }
@@ -744,7 +1076,7 @@ namespace TTRPGCreator.Database
             }
         }
 
-        public async Task<bool> AddStatusEffect(ulong serverID, long statusId, long effectId)
+        public async Task<int> AddStatusStatus(ulong serverID, long parentStatusId, long childStatusId, int level, bool delete)
         {
             try
             {
@@ -752,6 +1084,65 @@ namespace TTRPGCreator.Database
                 {
                     string gameId = DataCache.gameList[serverID];
                     await conn.OpenAsync();
+
+                    // If delete is true, remove the row and return
+                    if (delete)
+                    {
+                        string deleteQuery = $"DELETE FROM {gameId}.status_statuses WHERE parent_status_id = @parent_status_id AND child_status_id = @child_status_id";
+                        using (var deleteCmd = new NpgsqlCommand(deleteQuery, conn))
+                        {
+                            deleteCmd.Parameters.AddWithValue("@parent_status_id", parentStatusId);
+                            deleteCmd.Parameters.AddWithValue("@child_status_id", childStatusId);
+                            await deleteCmd.ExecuteNonQueryAsync();
+                        }
+                        return 2; // Exit the function after deleting the row
+                    }
+
+                    string query = $"INSERT INTO {gameId}.status_statuses (parent_status_id, child_status_id, level) " +
+                                   $"VALUES (@parent_status_id, @child_status_id, @level) " +
+                                   $"ON CONFLICT (parent_status_id, child_status_id) DO UPDATE SET " +
+                                   $"level = EXCLUDED.level;";
+
+                    using (var cmd = new NpgsqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@parent_status_id", parentStatusId);
+                        cmd.Parameters.AddWithValue("@child_status_id", childStatusId);
+                        cmd.Parameters.AddWithValue("@level", level);
+
+                        await cmd.ExecuteNonQueryAsync();
+                    }
+                }
+
+                return 1;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return 0;
+            }
+        }
+
+        public async Task<int> AddStatusEffect(ulong serverID, long statusId, long effectId, bool delete)
+        {
+            try
+            {
+                using (var conn = new NpgsqlConnection(connectionString))
+                {
+                    string gameId = DataCache.gameList[serverID];
+                    await conn.OpenAsync();
+
+                    // If delete is true, remove the row and return
+                    if (delete)
+                    {
+                        string deleteQuery = $"DELETE FROM {gameId}.status_effects WHERE status_id = @status_id AND effect_id = @effect_id";
+                        using (var deleteCmd = new NpgsqlCommand(deleteQuery, conn))
+                        {
+                            deleteCmd.Parameters.AddWithValue("@status_id", statusId);
+                            deleteCmd.Parameters.AddWithValue("@effect_id", effectId);
+                            await deleteCmd.ExecuteNonQueryAsync();
+                        }
+                        return 2; // Exit the function after deleting the row
+                    }
 
                     string query = $"INSERT INTO {gameId}.status_effects (status_id, effect_id) " +
                                    $"VALUES (@status_id, @effect_id);";
@@ -761,6 +1152,123 @@ namespace TTRPGCreator.Database
                         cmd.Parameters.AddWithValue("@status_id", statusId);
                         cmd.Parameters.AddWithValue("@effect_id", effectId);
 
+                        await cmd.ExecuteNonQueryAsync();
+                    }
+                }
+
+                return 1;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return 0;
+            }
+        }
+
+        public async Task<(bool, Status)> GetStatus(ulong serverID, long statusId, bool full = false)
+        {
+            try
+            {
+                Status statusDetails = new Status();
+                using (var conn = new NpgsqlConnection(connectionString))
+                {
+                    string gameId = DataCache.gameList[serverID];
+                    await conn.OpenAsync();
+
+                    // Get status main information
+                    using (var cmd = new NpgsqlCommand($"SELECT name, description, type " +
+                                                       $"FROM {gameId}.statuses " +
+                                                       $"WHERE status_id = @statusId", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@statusId", statusId);
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            if (await reader.ReadAsync())
+                            {
+                                statusDetails.name = reader.GetString(0);
+                                statusDetails.description = reader.GetString(1);
+                                statusDetails.type = reader.GetString(1);
+                            }
+                        }
+                    }
+
+                    if (!full)
+                        return (true, statusDetails);
+
+                    // Get status statuses
+                    statusDetails.statuses = new List<Status>();
+                    using (var cmd = new NpgsqlCommand($"SELECT child_status_id, level " +
+                                                       $"FROM {gameId}.status_statuses " +
+                                                       $"WHERE parent_status_id = @statusId", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@statusId", statusId);
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                long id = reader.GetInt64(0);
+                                var querySuccess = await GetStatus(serverID, id);
+                                if (!querySuccess.Item1)
+                                {
+                                    Console.WriteLine("Get Status Failed");
+                                    continue;
+                                }
+                                Status status = querySuccess.Item2;
+                                status.id = reader.GetInt64(0);
+
+                                statusDetails.statuses.Add(status);
+                            }
+                        }
+                    }
+
+                    // Get status effects
+                    statusDetails.effects = new List<Effect>();
+                    using (var cmd = new NpgsqlCommand($"SELECT effect_id " +
+                                                       $"FROM {gameId}.status_effects " +
+                                                       $"WHERE status_id = @statusId", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@statusId", statusId);
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                long id = reader.GetInt64(0);
+                                var querySuccess = await GetEffect(serverID, id, false);
+                                if (!querySuccess.Item1)
+                                {
+                                    Console.WriteLine("Get Effect Failed");
+                                    continue;
+                                }
+                                Effect effect = querySuccess.Item2;
+                                effect.id = reader.GetInt64(0);
+
+                                statusDetails.effects.Add(effect);
+                            }
+                        }
+                    }
+                }
+
+                return (true, statusDetails);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return (false, null);
+            }
+        }
+
+        public async Task<bool> DeleteStatus(ulong serverID, long statusId)
+        {
+            try
+            {
+                using (var conn = new NpgsqlConnection(connectionString))
+                {
+                    string gameId = DataCache.gameList[serverID];
+                    await conn.OpenAsync();
+
+                    using (var cmd = new NpgsqlCommand($"DELETE FROM {gameId}.statuses WHERE status_id = @statusId", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@statusId", statusId);
                         await cmd.ExecuteNonQueryAsync();
                     }
                 }
@@ -861,7 +1369,7 @@ namespace TTRPGCreator.Database
             }
         }
 
-        public async Task<bool> AddEffectTags(ulong serverID, long effectId, List<string> tags)
+        public async Task<bool> AddEffectTags(ulong serverID, long effectId, List<string> tags, bool clear)
         {
             try
             {
@@ -869,6 +1377,17 @@ namespace TTRPGCreator.Database
                 {
                     string gameId = DataCache.gameList[serverID];
                     await conn.OpenAsync();
+
+                    // If clear is true, delete all existing tags for the effect
+                    if (clear)
+                    {
+                        string deleteQuery = $"DELETE FROM {gameId}.effect_tags WHERE effect_id = @effectId;";
+                        using (var deleteCmd = new NpgsqlCommand(deleteQuery, conn))
+                        {
+                            deleteCmd.Parameters.AddWithValue("@effectId", effectId);
+                            await deleteCmd.ExecuteNonQueryAsync();
+                        }
+                    }
 
                     foreach (var tag in tags)
                     {
@@ -979,6 +1498,93 @@ namespace TTRPGCreator.Database
             return effects;
         }
 
+        public async Task<(bool, Effect)> GetEffect(ulong serverID, long effectId, bool full)
+        {
+            try
+            {
+                Effect effectDetails = new Effect();
+                using (var conn = new NpgsqlConnection(connectionString))
+                {
+                    string gameId = DataCache.gameList[serverID];
+                    await conn.OpenAsync();
+
+                    // Get effect main information
+                    using (var cmd = new NpgsqlCommand($"SELECT effect " +
+                                                       $"FROM {gameId}.effects " +
+                                                       $"WHERE effect_id = @effectId", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@effectId", effectId);
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            if (await reader.ReadAsync())
+                            {
+                                effectDetails.effect = reader.GetString(0);
+                            }
+                        }
+                    }
+
+                    if (!full)
+                        return (true, effectDetails);
+
+                    // Get effect tags
+                    effectDetails.tags = new List<string>();
+
+                    try
+                    {
+                        using (var cmd = new NpgsqlCommand($"SELECT tags.tag " +
+                                                           $"FROM {gameId}.effect_tags, {gameId}.tags " +
+                                                           $"WHERE effect_tags.tag_id = tags.tag_id AND effect_tags.effect_id = @effectId", conn))
+                        {
+                            cmd.Parameters.AddWithValue("@effectId", effectId);
+                            using (var reader = await cmd.ExecuteReaderAsync())
+                            {
+                                while (await reader.ReadAsync())
+                                {
+                                    string tag = reader.GetString(0);
+                                    effectDetails.tags.Add(tag);
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.Message);
+                    }
+                }
+
+                return (true, effectDetails);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return (false, null);
+            }
+        }
+
+        public async Task<bool> DeleteEffect(ulong serverID, long effectId)
+        {
+            try
+            {
+                using (var conn = new NpgsqlConnection(connectionString))
+                {
+                    string gameId = DataCache.gameList[serverID];
+                    await conn.OpenAsync();
+
+                    using (var cmd = new NpgsqlCommand($"DELETE FROM {gameId}.effects WHERE effect_id = @effectId", conn))
+                    {
+                        cmd.Parameters.AddWithValue("@effectId", effectId);
+                        await cmd.ExecuteNonQueryAsync();
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return false;
+            }
+        }
 
         #endregion
     }

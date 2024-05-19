@@ -29,6 +29,8 @@ namespace TTRPGCreator.System
         public string name;
         public string description;
         public long? discord_id;
+        public List<Item> items = null;
+        public List<Status> statuses = null;
     }
 
     public class  Item
@@ -36,6 +38,9 @@ namespace TTRPGCreator.System
         public long? id;
         public string name;
         public string description;
+        public int quantity = 1;
+        public bool equipped = false;
+        public List<Status> statuses = null;
     }
 
     public class Status
@@ -44,12 +49,15 @@ namespace TTRPGCreator.System
         public string name;
         public string description;
         public string type;
+        public List<Status> statuses = null;
+        public List<Effect> effects = null;
     }
 
     public class Effect
     {
         public long? id;
         public string effect;
+        public List<string> tags = null;
     }
 
     public enum NullBool

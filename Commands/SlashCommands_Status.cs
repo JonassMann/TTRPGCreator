@@ -76,16 +76,85 @@ namespace TTRPGCreator.Commands
                 await interactivity.SendPaginatedMessageAsync(ctx.Channel, ctx.User, pages); // Send the paginated message
             }
 
-            [SlashCommand("Effect", "Edits effect information for a status")]
-            public async Task Status(InteractionContext ctx, [Option("status", "Status id")] long status, [Option("effect", "Effect id")] long effect)
+            [SlashCommand("Status", "Edits status information for a status")]
+            public async Task Status(InteractionContext ctx, [Option("parent_status", "Parent status id")] long parent_status, [Option("child_status", "Child status id")] long child_status, [Option("level", "The level of the status")] double level = 1, [Option("delete", "Use true to delete status from status")] bool delete = false)
             {
                 await ctx.DeferAsync();
 
                 var DBEngine = new DBEngine();
-                bool querySuccess = await DBEngine.AddStatusEffect(ctx.Guild.Id, status, effect);
+                int querySuccess = await DBEngine.AddStatusStatus(ctx.Guild.Id, parent_status, child_status, (int)level, delete);
+
+                if (querySuccess == 1)
+                    await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Status added to status"));
+                else if (querySuccess == 2)
+                    await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Status removed from status"));
+                else
+                    await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Something went wrong"));
+            }
+
+            [SlashCommand("Effect", "Edits effect information for a status")]
+            public async Task Status(InteractionContext ctx, [Option("status", "Status id")] long status, [Option("effect", "Effect id")] long effect, [Option("delete", "Use true to delete effect from status")] bool delete = false)
+            {
+                await ctx.DeferAsync();
+
+                var DBEngine = new DBEngine();
+                int querySuccess = await DBEngine.AddStatusEffect(ctx.Guild.Id, status, effect, delete);
+
+                if (querySuccess == 1)
+                    await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Effect added to status"));
+                else if (querySuccess == 2)
+                    await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Effect removed from status"));
+                else
+                    await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Something went wrong"));
+            }
+
+            [SlashCommand("Get", "Get information of a status")]
+            public async Task Get(InteractionContext ctx, [Option("status", "Status id")] long statusId)
+            {
+                // Defer the reply. This is especially useful for longer running commands
+                await ctx.DeferAsync();
+
+                var DBEngine = new DBEngine();
+
+                var statusInfo = await DBEngine.GetStatus(ctx.Guild.Id, statusId, true);
+                if (!statusInfo.Item1)
+                {
+                    await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Something went wrong"));
+                    return;
+                }
+
+                Status statusValues = statusInfo.Item2;
+
+                // Create a new embed builder
+                var embed = new DiscordEmbedBuilder
+                {
+                    Title = statusValues.name,
+                    Description = statusValues.description,
+                    Color = DiscordColor.Blurple // You can set the embed color here
+                };
+
+                if (statusValues.statuses != null)
+                    foreach (Status status in statusValues.statuses)
+                        embed.AddField("Status: " + status.name, $"ID: {status.id}\nDescription: {status.description}\nType: {status.type}");
+
+                if (statusValues.effects != null)
+                    foreach (Effect effect in statusValues.effects)
+                        embed.AddField("Effect:", $"ID: {effect.id}\nEffect: {effect.effect}");
+
+                // Edit the original deferred message with the new embed
+                await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embed.Build()));
+            }
+
+            [SlashCommand("Delete", "Deletes a status")]
+            public async Task Delete(InteractionContext ctx, [Option("status", "Status id")] long status)
+            {
+                await ctx.DeferAsync();
+
+                var DBEngine = new DBEngine();
+                bool querySuccess = await DBEngine.DeleteStatus(ctx.Guild.Id, status);
 
                 if (querySuccess)
-                    await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Effect added to status"));
+                    await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Status deleted"));
                 else
                     await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Something went wrong"));
             }
@@ -150,7 +219,7 @@ namespace TTRPGCreator.Commands
             }
 
             [SlashCommand("Tags", "Edits tag information for an effect")]
-            public async Task Status(InteractionContext ctx, [Option("effect", "Effect id")] long status, [Option("tags", "Tags, comma separated")] string tagString)
+            public async Task Status(InteractionContext ctx, [Option("effect", "Effect id")] long status, [Option("tags", "Tags, comma separated")] string tagString, [Option("clear", "Set to true to reset tags")] bool clear = false)
             {
                 await ctx.DeferAsync();
 
@@ -160,10 +229,65 @@ namespace TTRPGCreator.Commands
                     tags.Add(tag);
 
                 var DBEngine = new DBEngine();
-                bool querySuccess = await DBEngine.AddEffectTags(ctx.Guild.Id, status, tags);
+                bool querySuccess = await DBEngine.AddEffectTags(ctx.Guild.Id, status, tags, clear);
 
                 if (querySuccess)
                     await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Tags added to effect"));
+                else
+                    await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Something went wrong"));
+            }
+
+            [SlashCommand("Get", "Get information of an effect")]
+            public async Task Get(InteractionContext ctx, [Option("effect", "Effect id")] long effectId)
+            {
+                // Defer the reply. This is especially useful for longer running commands
+                await ctx.DeferAsync();
+
+                var DBEngine = new DBEngine();
+
+                var effectInfo = await DBEngine.GetEffect(ctx.Guild.Id, effectId, true);
+                if (!effectInfo.Item1)
+                {
+                    await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Something went wrong"));
+                    return;
+                }
+
+                Effect effect = effectInfo.Item2;
+                Console.WriteLine(effect.effect);
+
+                // Create a new embed builder
+                var embed = new DiscordEmbedBuilder
+                {
+                    Title = "Effect id: " + effectId,
+                    Description = effect.effect,
+                    Color = DiscordColor.Blurple // You can set the embed color here
+                };
+                Console.WriteLine(effect.tags.Count);
+
+                string tagString = "";
+                if (effect.tags != null && effect.tags.Count > 0)
+                {
+                    foreach (string tag in effect.tags)
+                        tagString += $"{tag}, ";
+
+                    tagString = tagString.Remove(tagString.Length - 2);
+                }
+                embed.AddField("Tags:", tagString == "" ? "None" : tagString);
+
+                // Edit the original deferred message with the new embed
+                await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embed.Build()));
+            }
+
+            [SlashCommand("Delete", "Deletes an effect")]
+            public async Task Delete(InteractionContext ctx, [Option("effect", "Effect id")] long effect)
+            {
+                await ctx.DeferAsync();
+
+                var DBEngine = new DBEngine();
+                bool querySuccess = await DBEngine.DeleteEffect(ctx.Guild.Id, effect);
+
+                if (querySuccess)
+                    await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Effect deleted"));
                 else
                     await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Something went wrong"));
             }
