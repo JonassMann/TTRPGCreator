@@ -297,6 +297,7 @@ namespace TTRPGCreator.Database
                                                        $"CREATE TABLE IF NOT EXISTS {gameId}.status_effects (" +
                                                            $"status_id INT," +
                                                            $"effect_id INT," +
+                                                           $"level INT," +
                                                            $"PRIMARY KEY (status_id, effect_id)," +
                                                            $"FOREIGN KEY (status_id) REFERENCES {gameId}.statuses(status_id) ON DELETE CASCADE," +
                                                            $"FOREIGN KEY (effect_id) REFERENCES {gameId}.effects(effect_id) ON DELETE CASCADE" +
@@ -1122,7 +1123,7 @@ namespace TTRPGCreator.Database
             }
         }
 
-        public async Task<int> AddStatusEffect(ulong serverID, long statusId, long effectId, bool delete)
+        public async Task<int> AddStatusEffect(ulong serverID, long statusId, long effectId, long level, bool delete)
         {
             try
             {
@@ -1144,13 +1145,16 @@ namespace TTRPGCreator.Database
                         return 2; // Exit the function after deleting the row
                     }
 
-                    string query = $"INSERT INTO {gameId}.status_effects (status_id, effect_id) " +
-                                   $"VALUES (@status_id, @effect_id);";
+                    string query = $"INSERT INTO {gameId}.status_effects (status_id, effect_id, level) " +
+                                   $"VALUES (@status_id, @effect_id, @level) " +
+                                   $"ON CONFLICT (status_id, effect_id) " +
+                                   $"DO UPDATE SET level = EXCLUDED.level;";
 
                     using (var cmd = new NpgsqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@status_id", statusId);
                         cmd.Parameters.AddWithValue("@effect_id", effectId);
+                        cmd.Parameters.AddWithValue("@level", level);
 
                         await cmd.ExecuteNonQueryAsync();
                     }
@@ -1223,7 +1227,7 @@ namespace TTRPGCreator.Database
 
                     // Get status effects
                     statusDetails.effects = new List<Effect>();
-                    using (var cmd = new NpgsqlCommand($"SELECT effect_id " +
+                    using (var cmd = new NpgsqlCommand($"SELECT effect_id, level " +
                                                        $"FROM {gameId}.status_effects " +
                                                        $"WHERE status_id = @statusId", conn))
                     {
@@ -1233,7 +1237,7 @@ namespace TTRPGCreator.Database
                             while (await reader.ReadAsync())
                             {
                                 long id = reader.GetInt64(0);
-                                var querySuccess = await GetEffect(serverID, id, false);
+                                var querySuccess = await GetEffect(serverID, id, true);
                                 if (!querySuccess.Item1)
                                 {
                                     Console.WriteLine("Get Effect Failed");
@@ -1241,6 +1245,7 @@ namespace TTRPGCreator.Database
                                 }
                                 Effect effect = querySuccess.Item2;
                                 effect.id = reader.GetInt64(0);
+                                effect.level = reader.GetInt32(1);
 
                                 statusDetails.effects.Add(effect);
                             }
@@ -1325,7 +1330,7 @@ namespace TTRPGCreator.Database
             return effects;
         }
 
-        public async Task<bool> AddEffect(ulong serverID, Effect effect)
+        public async Task<bool> AddEffect(ulong serverID, Effect effect, List<string> tags = null)
         {
             try
             {
@@ -1345,7 +1350,8 @@ namespace TTRPGCreator.Database
                     else
                     {
                         query = $"INSERT INTO {gameId}.effects (effect) " +
-                                $"VALUES (@effect)";
+                                $"VALUES (@effect) " +
+                                $"RETURNING effect_id";
                     }
 
                     using (var cmd = new NpgsqlCommand(query, conn))
@@ -1356,8 +1362,21 @@ namespace TTRPGCreator.Database
                         }
                         cmd.Parameters.AddWithValue("effect", effect.effect);
 
-                        await cmd.ExecuteNonQueryAsync();
+                        var id = await cmd.ExecuteScalarAsync();
+                        if (id != null && id is long)
+                        {
+                            effect.id = (long)id;
+                        }
+                        else if (id != null && id is int) // In case the id is returned as an int
+                        {
+                            effect.id = (long)(int)id;
+                        }
                     }
+                }
+
+                if(tags != null && tags.Count != 0)
+                {
+                    await AddEffectTags(serverID, (long)effect.id, tags, false);
                 }
 
                 return true;
@@ -1449,29 +1468,29 @@ namespace TTRPGCreator.Database
                     await conn.OpenAsync();
 
                     string query = $@"
-                        WITH RECURSIVE StatusHierarchy AS (
-                            SELECT character_statuses.status_id
-                            FROM {gameId}.character_statuses
-                            WHERE character_statuses.character_id = @characterId
-                            UNION
-                            SELECT item_statuses.status_id
-                            FROM {gameId}.character_items
-                            JOIN {gameId}.item_statuses ON character_items.item_id = item_statuses.item_id
-                            WHERE character_items.character_id = @characterId AND character_items.equipped = true
-                            UNION
-                            SELECT status_statuses.child_status_id
-                            FROM StatusHierarchy
-                            JOIN {gameId}.status_statuses ON StatusHierarchy.status_id = status_statuses.parent_status_id
-                        )
-                        SELECT effects.effect
-                        FROM StatusHierarchy
-                        JOIN {gameId}.status_effects ON StatusHierarchy.status_id = status_effects.status_id
-                        JOIN {gameId}.effects ON status_effects.effect_id = effects.effect_id
-                        JOIN {gameId}.effect_tags ON effects.effect_id = effect_tags.effect_id
-                        JOIN {gameId}.tags ON effect_tags.tag_id = tags.tag_id
-                        WHERE tags.tag = ANY(@tags)
-                        GROUP BY effects.effect_id
-                        HAVING COUNT(DISTINCT tags.tag) = @tagCount;";
+                                    WITH RECURSIVE StatusHierarchy AS (
+                                        SELECT character_statuses.status_id
+                                        FROM {gameId}.character_statuses
+                                        WHERE character_statuses.character_id = @characterId
+                                        UNION
+                                        SELECT item_statuses.status_id
+                                        FROM {gameId}.character_items
+                                        JOIN {gameId}.item_statuses ON character_items.item_id = item_statuses.item_id
+                                        WHERE character_items.character_id = @characterId AND character_items.equipped = true
+                                        UNION
+                                        SELECT status_statuses.child_status_id
+                                        FROM StatusHierarchy
+                                        JOIN {gameId}.status_statuses ON StatusHierarchy.status_id = status_statuses.parent_status_id
+                                    )
+                                    SELECT effects.effect, status_effects.level
+                                    FROM StatusHierarchy
+                                    JOIN {gameId}.status_effects ON StatusHierarchy.status_id = status_effects.status_id
+                                    JOIN {gameId}.effects ON status_effects.effect_id = effects.effect_id
+                                    JOIN {gameId}.effect_tags ON effects.effect_id = effect_tags.effect_id
+                                    JOIN {gameId}.tags ON effect_tags.tag_id = tags.tag_id
+                                    WHERE tags.tag = ANY(@tags)
+                                    GROUP BY effects.effect_id, status_effects.level
+                                    HAVING COUNT(DISTINCT tags.tag) = @tagCount;";
 
                     using (var cmd = new NpgsqlCommand(query, conn))
                     {
@@ -1483,7 +1502,8 @@ namespace TTRPGCreator.Database
                         {
                             while (await reader.ReadAsync())
                             {
-                                effects.Add(reader.GetString(0));
+                                long level = reader.GetInt64(1);
+                                effects.Add(reader.GetString(0).Replace("|", $"({level.ToString()})"));
                             }
                         }
                     }

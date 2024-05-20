@@ -93,12 +93,12 @@ namespace TTRPGCreator.Commands
             }
 
             [SlashCommand("Effect", "Edits effect information for a status")]
-            public async Task Status(InteractionContext ctx, [Option("status", "Status id")] long status, [Option("effect", "Effect id")] long effect, [Option("delete", "Use true to delete effect from status")] bool delete = false)
+            public async Task Status(InteractionContext ctx, [Option("status", "Status id")] long status, [Option("effect", "Effect id")] long effect, [Option("level", "The level of the effect")] long level = 1, [Option("delete", "Use true to delete effect from status")] bool delete = false)
             {
                 await ctx.DeferAsync();
 
                 var DBEngine = new DBEngine();
-                int querySuccess = await DBEngine.AddStatusEffect(ctx.Guild.Id, status, effect, delete);
+                int querySuccess = await DBEngine.AddStatusEffect(ctx.Guild.Id, status, effect, level, delete);
 
                 if (querySuccess == 1)
                     await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Effect added to status"));
@@ -139,7 +139,18 @@ namespace TTRPGCreator.Commands
 
                 if (statusValues.effects != null)
                     foreach (Effect effect in statusValues.effects)
-                        embed.AddField("Effect:", $"ID: {effect.id}\nEffect: {effect.effect}");
+                    {
+                        string tagString = "None";
+                        if (effect.tags != null && effect.tags.Count > 0)
+                        {
+                            tagString = "";
+                            foreach (string tag in effect.tags)
+                                tagString += $"{tag}, ";
+
+                            tagString = tagString.Remove(tagString.Length - 2);
+                        }
+                        embed.AddField("Effect:", $"ID: {effect.id}\nEffect: {effect.effect}\nLevel: {effect.level}\nTags: {tagString}");
+                    }
 
                 // Edit the original deferred message with the new embed
                 await ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embed.Build()));
@@ -165,7 +176,7 @@ namespace TTRPGCreator.Commands
         public class EffectGroup : ApplicationCommandModule
         {
             [SlashCommand("Create", "Creates an effect or edits it's basic information")]
-            public async Task Create(InteractionContext ctx, [Option("effect", "The effect function")] string effect, [Option("id", "The id of the item you want to edit")] long? id = null)
+            public async Task Create(InteractionContext ctx, [Option("effect", "The effect function")] string effect, [Option("tags", "Tags, comma separated")] string tagString = null, [Option("id", "The id of the item you want to edit")] long? id = null)
             {
                 await ctx.DeferAsync();
 
@@ -175,8 +186,16 @@ namespace TTRPGCreator.Commands
                     effect = effect
                 };
 
+                List<string> tags = new List<string>();
+                if (tagString != null)
+                {
+                    var tagArray = tagString.Split(',');
+                    foreach (string tag in tagArray)
+                        tags.Add(tag);
+                }
+
                 var DBEngine = new DBEngine();
-                bool querySuccess = await DBEngine.AddEffect(ctx.Guild.Id, newEffect);
+                bool querySuccess = await DBEngine.AddEffect(ctx.Guild.Id, newEffect, tags);
 
                 if (querySuccess)
                     await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Effect added"));

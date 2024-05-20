@@ -21,6 +21,7 @@ namespace TTRPGCreator
         public static CommandsNextExtension commands { get; set; }
         public static SlashCommandsExtension slashCommands { get; set; }
 
+
         static async Task Main(string[] args)
         {
             var configJson = new JSONReader();
@@ -52,14 +53,23 @@ namespace TTRPGCreator
             commands = client.UseCommandsNext(commandsConfig);
             slashCommands = client.UseSlashCommands();
 
+            List<ulong?> guilds = new List<ulong?>();
+            guilds.Add(1067104957356052501);
+            //guilds.Add(1241815570203283457);
+            guilds.Add(1240406903792734378);
+
             // Register commands
             commands.RegisterCommands<Commands_System>();
             // commands.RegisterCommands<TestCommands>();
             // slashCommandsConfig.RegisterCommands<TestSlashCommands>();
-            slashCommands.RegisterCommands<SlashCommands_System>(1067104957356052501);
-            slashCommands.RegisterCommands<SlashCommands_Character>(1067104957356052501);
-            slashCommands.RegisterCommands<SlashCommands_Item>(1067104957356052501);
-            slashCommands.RegisterCommands<SlashCommands_Status>(1067104957356052501);
+
+            foreach (ulong? guild in guilds)
+            {
+                slashCommands.RegisterCommands<SlashCommands_System>(guild);
+                slashCommands.RegisterCommands<SlashCommands_Character>(guild);
+                slashCommands.RegisterCommands<SlashCommands_Item>(guild);
+                slashCommands.RegisterCommands<SlashCommands_Status>(guild);
+            }
 
             // Register events
             TestEvents.RegisterEvents();

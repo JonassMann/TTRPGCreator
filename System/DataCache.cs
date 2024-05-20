@@ -58,6 +58,7 @@ namespace TTRPGCreator.System
         public long? id;
         public string effect;
         public List<string> tags = null;
+        public int level = 1;
     }
 
     public enum NullBool

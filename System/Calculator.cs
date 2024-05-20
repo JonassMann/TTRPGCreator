@@ -34,6 +34,8 @@ namespace TTRPGCreator.Functionality
         public static async Task<double> Eval(string expression, ulong gameID, long characterID)
         {
             // Splits string into parts
+            Console.WriteLine($"Expression: {expression}");
+
             List<string> tokens = await getTokens(expression, gameID, characterID);
             Stack<double> operandStack = new Stack<double>();
             Stack<string> operatorStack = new Stack<string>();

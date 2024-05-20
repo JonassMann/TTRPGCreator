@@ -10,6 +10,7 @@ using DSharpPlus.CommandsNext.Attributes;
 using System.Collections.Generic;
 using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.Interactivity;
+using System;
 
 namespace TTRPGCreator.Commands
 {
@@ -115,12 +116,18 @@ namespace TTRPGCreator.Commands
         }
 
         [SlashCommand("Calc", "Calculate string expression")]
-        public async Task Calc(InteractionContext ctx, [Option("expression", "The string expression")] string expression)
+        public async Task Calc(InteractionContext ctx, [Option("expression", "The string expression")] string expression, [Option("character", "Character id")] long? characterId = null)
         {
             await ctx.DeferAsync();
             DBEngine DBEngine = new DBEngine();
 
-            var result = await Calculator.Eval(expression, ctx.Guild.Id, (long)await DBEngine.GetCharacterDiscord(ctx.Guild.Id, ctx.User.Id));
+            if (characterId == null)
+                characterId = (long?)await DBEngine.GetCharacterDiscord(ctx.Guild.Id, ctx.User.Id);
+
+            if (characterId == null)
+                characterId = 0;
+
+            var result = await Calculator.Eval(expression, ctx.Guild.Id, (long)characterId);
 
             await ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent(result.ToString()));
         }
